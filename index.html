@@ -1,4 +1,173 @@
 <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI & Academia </title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>AI & Academia</span>
+        </div>
+        <nav class="nav-links">
+            <button class="nav-btn active" data-tab="home">Início</button>
+            <button class="nav-btn" data-tab="dashboard">Dashboard</button>
+        </nav>
+    </header>
+
+    <main class="main-container">
+        <section id="home" class="tab-content active">
+            <div class="hero-section">
+                <h1>Quanto uso de IA é demais para quem estuda?</h1>
+                <p class="hero-subtitle">
+                    Dados de 50.000 estudantes para descobrir a partir de quantas horas por semana a IA deixa de ajudar e passa a pesar.
+                </p>
+                <div class="hero-actions">
+                    <button class="primary-btn" onclick="switchTab('dashboard')">
+                        Explorar Dashboard <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="story-grid">
+                <div class="story-card highlight-card">
+                    <div class="card-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <h3>O Gancho do Burnout</h3>
+                    <div class="burnout-stat">
+                        <span class="stat-from">9%</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                        <span class="stat-to">74%</span>
+                    </div>
+                    <p>O risco de esgotamento salta de <strong>9%</strong> (0–2h/semana) para <strong>74%</strong> em usos superiores a 20 horas semanais.</p>
+                </div>
+
+                <div class="story-card">
+                    <div class="card-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <h3>Curva de Produtividade</h3>
+                    <p>O uso moderado otimiza tarefas e síntese de conteúdos, enquanto a dependência excessiva reduz a retenção cognitiva a longo prazo.</p>
+                </div>
+
+                <div class="story-card">
+                    <div class="card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3>Equilíbrio Ideal</h3>
+                    <p>Transforme a tecnologia em uma aliada para o aprendizado sem comprometer o pensamento crítico e o bem-estar.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="dashboard" class="tab-content">
+            <div class="dashboard-header">
+                <div>
+                    <h2>Dados Detalhados</h2>
+                    <p>Métricas detalhadas extraídas do dataset global de estudantes.</p>
+                </div>
+                <div class="filter-group">
+                    <label for="academicFilter"><i class="fa-solid fa-filter"></i> Nível:</label>
+                    <select id="academicFilter">
+                        <option value="all">Todos os Níveis</option>
+                        <option value="undergrad">Graduação</option>
+                        <option value="postgrad">Pós-Graduação</option>
+                        <option value="highschool">Ensino Médio</option>
+                    </select>
+                </div>
+            </div>
+
+          
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-info">
+                        <h4>Amostra</h4>
+                        <span class="kpi-value">50.000</span>
+                        <span class="kpi-sub text-green">0% Valores Nulos</span>
+                    </div>
+                    <div class="kpi-icon bg-blue"><i class="fa-solid fa-users"></i></div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-info">
+                        <h4>Uso Médio</h4>
+                        <span class="kpi-value">8.4 h</span>
+                        <span class="kpi-sub text-blue">Por estudante/semana</span>
+                    </div>
+                    <div class="kpi-icon bg-purple"><i class="fa-solid fa-clock"></i></div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-info">
+                        <h4>Risco de Burnout</h4>
+                        <span class="kpi-value">41.8%</span>
+                        <span class="kpi-sub text-orange">Média Geral (>15h)</span>
+                    </div>
+                    <div class="kpi-icon bg-orange"><i class="fa-solid fa-fire"></i></div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-info">
+                        <h4>Retenção</h4>
+                        <span class="kpi-value">68.2pt</span>
+                        <span class="kpi-sub text-green">Avaliação cognitiva</span>
+                    </div>
+                    <div class="kpi-icon bg-green"><i class="fa-solid fa-brain"></i></div>
+                </div>
+            </div>
+
+            
+            <div class="charts-grid">
+                <div class="chart-card large">
+                    <div class="chart-header">
+                        <h3>Desempenho vs. Horas de IA</h3>
+                        <span class="chart-tag">Curva de Impacto</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Taxa de Burnout</h3>
+                        <span class="chart-tag">Carga Horária</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="burnoutChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                       <h3> Habilidades Cognitivas</h3>
+                        <span class="chart-tag">Multidimensional</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>AI & Academia &bull; Análise de impacto acadêmico baseada em dados reais.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+ <!-- codigo antigo 
+
+
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,4 +196,4 @@
     <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
-</html>
+</html 
