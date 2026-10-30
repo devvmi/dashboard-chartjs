@@ -20,6 +20,7 @@
         <nav class="nav-links">
             <button class="nav-btn active" data-tab="home">Início</button>
             <button class="nav-btn" data-tab="dashboard">Dashboard</button>
+            <button class="nav-btn" data-tab="observacoes">Observações</button>
         </nav>
     </header>
 
@@ -59,6 +60,11 @@
                     <div class="card-icon"><i class="fa-solid fa-shield-halved"></i></div>
                     <h3>Equilíbrio Ideal</h3>
                     <p>Transforme a tecnologia em uma aliada para o aprendizado sem comprometer o pensamento crítico e o bem-estar.</p>
+                </div>
+
+                <div class="story-card">
+                    <h3>Status das IAs</h3>
+                    <div id="listaPrincipais"></div>
                 </div>
             </div>
         </section>
@@ -153,6 +159,27 @@
             </div>
         </section>
 
+        <section id="observacoes" class="tab-content">
+            <div class="dashboard-header">
+                <div>
+                    <h2>Observações</h2>
+                    <p>Anote o que você notou sobre o uso de IA.</p>
+                </div>
+            </div>
+
+            <div class="story-card">
+                <div>
+                    <input type="text" id="novaTarefa" placeholder="Digite uma nova observação...">
+                    <button class="primary-btn" onclick="adicionarTarefa()">Adicionar</button>
+                </div>
+                <div>
+                    <button class="nav-btn" onclick="carregarTarefas()">Atualizar Lista</button>
+                    <button class="nav-btn" onclick="baixarLista()">Baixar Lista</button>
+                </div>
+                <div id="listaTarefas"></div>
+            </div>
+        </section>
+
     </main>
 
     <footer class="footer">
@@ -162,38 +189,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
- <!-- codigo antigo 
-
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste</title>
-</head>
-<body>
-    
-
-    <h5>Aqui você pode adicionar observações sobre a IA</h5>
-       
-       <div>
-           <input type="text" id="novaTarefa" placeholder="Digite uma nova tarefa...">
-           <button onclick="adicionarTarefa()">Adicionar</button>
-       </div>
-       <button onclick="carregarTarefas()">Atualizar Lista</button>
-       <button onclick="baixarLista()">Baixar Lista</button>
-       <div id="listaTarefas"></div>
-
-
-       <div id="listaPrincipais">
-            
-       </div>
-
-
-    <script src="config.js"></script>
-    <script src="script.js"></script>
-</body>
-</html 
