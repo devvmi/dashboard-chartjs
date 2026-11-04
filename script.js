@@ -1,289 +1,299 @@
-// API 1 - 'Prismix' que mostra na tela o Status das IAs mais famosas
+(function () {
+  "use strict";
 
-function carregarStatusIA() {
-    
-    const iasEscolhidas = ['anthropic', 'gemini-api', 'openai', 'github-copilot', 'midjourney'];
-    
-    const divPrincipais = document.getElementById('listaPrincipais');
-    divPrincipais.innerHTML = ''; 
+  /* =========================================================
+     API 1 - 'Prismix': mostra na tela o status das IAs mais famosas
+     ========================================================= */
+  function carregarStatusIA() {
+    const iasEscolhidas = ["anthropic", "gemini-api", "openai", "github-copilot", "midjourney"];
+    const divPrincipais = document.getElementById("listaPrincipais");
+    divPrincipais.innerHTML = "";
 
-        // Injeta a img para os status
     iasEscolhidas.forEach(ia => {
-        const urlDaImagem = `https://prismix.dev/api/badge/${ia}.svg`;
-        
-        divPrincipais.innerHTML += `
-            <img src="${urlDaImagem}" alt="Status ${ia}" style="margin-bottom: 10px; display: block; width: 200px;">
-        `;
+      const img = document.createElement("img");
+      img.src = `https://prismix.dev/api/badge/${ia}.svg`;
+      img.alt = `Status ${ia}`;
+      divPrincipais.appendChild(img);
     });
-}
+  }
 
-carregarStatusIA(); // Necessário add <div id="listaPrincipais"></div> e <Script src="script.js"></Script> no body
-
-   // API 2 - 'Back4App' BaaS - Backend como serviço
-           
-// Função para fazer requisições HTTP
-async function requisicaoAPI(endpoint, metodo = 'GET', dados = null) {
-    const config = {
+  // Função para fazer requisições HTTP
+  async function requisicaoAPI(endpoint, metodo = "GET", dados = null) {
+    try {
+      const config = {
         method: metodo,
         headers: {
-            'X-Parse-Application-Id': APP_ID,
-            'X-Parse-REST-API-Key': REST_KEY,
-            'Content-Type': 'application/json'
+          "X-Parse-Application-Id": APP_ID,
+          "X-Parse-REST-API-Key": REST_KEY,
+          "Content-Type": "application/json"
         }
-    };
+      };
 
-    if (dados) {
+      if (dados) {
         config.body = JSON.stringify(dados);
-    }
+      }
 
-    try {
-        const response = await fetch(`${SERVER_URL}${endpoint}`, config);
-        return await response.json();
+      const response = await fetch(`${SERVER_URL}${endpoint}`, config);
+      return await response.json();
     } catch (error) {
-        console.error('Erro na requisição:', error);
-        return null;
+      console.error("Erro na requisição:", error);
+      return null;
     }
-}
+  }
 
-// Carregar e exibir as observações na tela
-async function carregarTarefas() {
-    const resultado = await requisicaoAPI('/parse/classes/Tarefa');
-    const listDiv = document.getElementById('listaTarefas');
+  function mensagemLista(texto) {
+    const listDiv = document.getElementById("listaTarefas");
+    listDiv.innerHTML = "";
+    const p = document.createElement("p");
+    p.className = "empty";
+    p.textContent = texto;
+    listDiv.appendChild(p);
+  }
 
-    if (resultado && resultado.results) {
-        listDiv.innerHTML = '';
-        resultado.results.forEach(tarefa => {
-            const div = document.createElement('div');
+  async function carregarTarefas() {
+    const resultado = await requisicaoAPI("/parse/classes/Tarefa");
+    const listDiv = document.getElementById("listaTarefas");
 
-            div.className = 'tarefa';
-
-            // Agora a div só tem o texto da observação e o botão de lixeira/excluir
-            div.innerHTML = `
-                <h3>${tarefa.titulo}</h3>
-                <button onclick="excluirTarefa('${tarefa.objectId}')">Excluir</button>
-            `;
-            listDiv.appendChild(div);
-        });
+    if (!resultado || !resultado.results) {
+      mensagemLista("Não foi possível carregar as observações. Confira o config.js e o Console (F12).");
+      return;
     }
-}
 
-// Adicionar uma nova observação no banco
-async function adicionarTarefa() {
-    const titulo = document.getElementById('novaTarefa').value;
+    if (!resultado.results.length) {
+      mensagemLista("Nenhuma observação ainda. Escreva a primeira acima.");
+      return;
+    }
+
+    listDiv.innerHTML = "";
+    resultado.results.forEach(tarefa => {
+      const div = document.createElement("div");
+      div.className = "tarefa";
+
+      const texto = document.createElement("span");
+      texto.textContent = tarefa.titulo;
+
+      const botao = document.createElement("button");
+      botao.textContent = "Excluir";
+      botao.setAttribute("aria-label", "Excluir observação: " + tarefa.titulo);
+      botao.addEventListener("click", () => excluirTarefa(tarefa.objectId));
+
+      div.append(texto, botao);
+      listDiv.appendChild(div);
+    });
+  }
+
+  // Adicionar uma nova observação no banco
+  async function adicionarTarefa() {
+    const input = document.getElementById("novaTarefa");
+    const titulo = input.value;
 
     if (!titulo.trim()) {
-        alert('Digite o texto da observação!');
-        return;
+      alert("Digite o texto da observação!");
+      return;
     }
+    const novaTarefa = { titulo: titulo };
 
-    // O pacote de dados agora só leva o texto, sem status de conclusão
-    const novaTarefa = {
-        titulo: titulo
-    };
-
-    const resultado = await requisicaoAPI('/parse/classes/Tarefa', 'POST', novaTarefa);
+    const resultado = await requisicaoAPI("/parse/classes/Tarefa", "POST", novaTarefa);
 
     if (resultado && resultado.objectId) {
-        document.getElementById('novaTarefa').value = ''; // Limpa o input
-        carregarTarefas(); // Atualiza a lista
+      input.value = ""; // Limpa o input
+      carregarTarefas(); // Atualiza a lista
+    } else {
+      alert("Não foi possível salvar a observação. Confira o config.js e o Console (F12).");
     }
-}
+  }
 
-// Excluir a observação do banco
-async function excluirTarefa(objectId) {
-    if (confirm('Tem certeza que deseja excluir esta observação?')) {
-        await requisicaoAPI(`/parse/classes/Tarefa/${objectId}`, 'DELETE');
-        carregarTarefas();
+  // Excluir a observação do banco
+  async function excluirTarefa(objectId) {
+    if (confirm("Tem certeza que deseja excluir esta observação?")) {
+      const resultado = await requisicaoAPI(`/parse/classes/Tarefa/${objectId}`, "DELETE");
+      if (!resultado) alert("Não foi possível excluir a observação.");
+      carregarTarefas();
     }
-}
+  }
 
-// Puxa a lista automaticamente quando você abre o index.html
-window.onload = carregarTarefas;
-
-// Função para gerar o arquivo e fazer o download
-async function baixarLista() {
+  // Função para gerar o arquivo e fazer o download
+  async function baixarLista() {
     // 1. Pede a lista atualizada
-    const resultado = await requisicaoAPI('/parse/classes/Tarefa');
-    
+    const resultado = await requisicaoAPI("/parse/classes/Tarefa");
+
     // Verifica se tem itens lá na lista
     if (resultado && resultado.results && resultado.results.length > 0) {
-        
-        // 2. Monta o textinho que vai dentro do arquivo
-        let textoParaArquivo = "--- MINHAS OBSERVAÇÕES SOBRE IA ---\n\n";
-        
-        resultado.results.forEach((tarefa, numero) => {
-            textoParaArquivo += `${numero + 1}. ${tarefa.titulo}\n`;
-        });
 
-        // 3. Cria um "arquivo virtual" de texto lá no navegador
-        const arquivoVirtual = new Blob([textoParaArquivo], { type: 'text/plain' });
-        const linkDoArquivo = URL.createObjectURL(arquivoVirtual);
+      // 2. Monta o textinho que vai dentro do arquivo
+      let textoParaArquivo = "--- MINHAS OBSERVAÇÕES SOBRE IA ---\n\n";
 
-        // 4. Link temporario: cria um link, clica nele e depois apaga
-        const linkInvisivel = document.createElement('a');
-        linkInvisivel.href = linkDoArquivo;
-        linkInvisivel.download = 'lista_de_observacoes.txt'; // Nome do arquivo que vai baixar
-        
-        document.body.appendChild(linkInvisivel);
-        linkInvisivel.click(); // Força o clique para iniciar o download
-        document.body.removeChild(linkInvisivel); // Apaga o link para não sujar a tela
+      resultado.results.forEach((tarefa, numero) => {
+        textoParaArquivo += `${numero + 1}. ${tarefa.titulo}\n`;
+      });
 
+      // 3. Cria um "arquivo virtual" de texto lá no navegador
+      const arquivoVirtual = new Blob([textoParaArquivo], { type: "text/plain" });
+      const linkDoArquivo = URL.createObjectURL(arquivoVirtual);
+
+      // 4. Link temporário: cria um link, clica nele e depois apaga
+      const linkInvisivel = document.createElement("a");
+      linkInvisivel.href = linkDoArquivo;
+      linkInvisivel.download = "lista_de_observacoes.txt"; // Nome do arquivo que vai baixar
+
+      document.body.appendChild(linkInvisivel);
+      linkInvisivel.click(); // Força o clique para iniciar o download
+      document.body.removeChild(linkInvisivel); // Apaga o link para não sujar a tela
+
+      // Libera a memória só depois, senão alguns navegadores cancelam o download
+      setTimeout(() => URL.revokeObjectURL(linkDoArquivo), 1000);
+
+    } else if (resultado && resultado.results) {
+      alert("A lista está vazia! Adicione algo antes de baixar.");
     } else {
-        alert("A lista está vazia! Adicione algo antes de baixar.");
+      alert("Não foi possível buscar a lista. Confira o config.js e o Console (F12).");
     }
-}
+  }
 
+  // Botões da aba Observações (ligados aqui para o HTML ficar só com HTML)
+  document.getElementById("btnAdicionar").addEventListener("click", adicionarTarefa);
+  document.getElementById("btnAtualizar").addEventListener("click", carregarTarefas);
+  document.getElementById("btnBaixar").addEventListener("click", baixarLista);
+  document.getElementById("novaTarefa").addEventListener("keydown", e => {
+    if (e.key === "Enter") adicionarTarefa();
+  });
 
- // RAFA QUE ADD - PRA FUNCIONAR OS BOTOES E DEIXAR BONITINHO HIHII
+  /* =========================================================
+     ABAS
+     ========================================================= */
+  const TABS = ["inicio", "dashboard", "observacoes"];
+  let abaAtual = null;
+  let charts = [];
 
-function switchTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
+  function show(name) {
+    if (!TABS.includes(name)) name = "inicio";
+
+    // Evita trabalho dobro: mudar o hash dispara "hashchange", que chamaria show() de novo
+    if (name === abaAtual) return;
+    abaAtual = name;
+
+    TABS.forEach(t => document.getElementById(t).hidden = t !== name);
+    document.querySelectorAll("nav button").forEach(b => {
+      if (b.dataset.tab === name) b.setAttribute("aria-current", "page");
+      else b.removeAttribute("aria-current");
     });
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
 
-    document.getElementById(tabId).classList.add('active');
-    const targetBtn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
-    if (targetBtn) {
-        targetBtn.classList.add('active');
+    if (name === "dashboard") drawCharts();
+    if (location.hash !== "#" + name) location.hash = name;
+  }
+
+  document.querySelectorAll("nav button").forEach(b =>
+    b.addEventListener("click", () => show(b.dataset.tab))
+  );
+  window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+
+  /* =========================================================
+     MEDIDOR DE BURNOUT
+     ========================================================= */
+  const bands = [{ max: 2, p: 9 }, { max: 5, p: 15 }, { max: 10, p: 28 }, { max: 20, p: 49 }, { max: 99, p: 74 }];
+  const dots = document.getElementById("dots");
+  for (let i = 0; i < 100; i++) dots.appendChild(document.createElement("i"));
+  const hrs = document.getElementById("hrs");
+
+  function meter() {
+    const h = +hrs.value;
+    const p = bands.find(b => h <= b.max).p;
+    document.getElementById("pct").textContent = p;
+    document.getElementById("hout").textContent = h + " h";
+    [...dots.children].forEach((d, i) => d.classList.toggle("on", i < p));
+  }
+  hrs.addEventListener("input", meter);
+
+  /* =========================================================
+     GRÁFICOS
+     Valores por faixa são ilustrativos, exceto 9% e 74% de burnout.
+     Troque pelos números reais do seu dataset.
+     ========================================================= */
+  const labels = ["0–2 h", "3–5 h", "6–10 h", "11–20 h", "Mais de 20 h"];
+  const perf = [58, 66, 74, 69, 57];
+  const burn = [9, 15, 28, 49, 74];
+  const radarLabels = ["Síntese", "Pensamento crítico", "Retenção", "Autonomia", "Criatividade", "Organização"];
+  const radarMod = [78, 70, 72, 74, 68, 76];
+  const radarHigh = [70, 48, 50, 45, 52, 60];
+  const off = { all: [0, 0], undergrad: [1, 0], postgrad: [4, -5], highschool: [-3, 6] };
+  const v = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  function drawCharts() {
+    // Sem internet o Chart.js não carrega; avisa no Console em vez de quebrar a aba
+    if (typeof Chart === "undefined") {
+      console.error("Chart.js não carregou. Confira a conexão com a internet.");
+      return;
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
 
-document.querySelectorAll('.nav-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        const tabId = button.getAttribute('data-tab');
-        switchTab(tabId);
-    });
-});
+    charts.forEach(c => c.destroy());
+    charts = [];
 
-// Configuração Global do Chart.js para Tema Claro
-Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-Chart.defaults.color = '#64748b';
-Chart.defaults.scale.grid.color = '#f1f5f9';
+    const [dp, db] = off[document.getElementById("lvl").value];
 
-let performanceChartInstance = null;
-let burnoutChartInstance = null;
-let radarChartInstance = null;
+    const ink = v("--ink"), muted = v("--muted"), line = v("--line");
+    Chart.defaults.font.family = '"Bricolage Grotesque", system-ui, sans-serif';
+    Chart.defaults.color = muted;
 
-// Inicialização dos Gráficos
-function initCharts(filter = 'all') {
-    // Destruir gráficos anteriores se existirem
-    if (performanceChartInstance) performanceChartInstance.destroy();
-    if (burnoutChartInstance) burnoutChartInstance.destroy();
-    if (radarChartInstance) radarChartInstance.destroy();
-
-    // Dados ajustados conforme o filtro acadêmico simulado
-    let multiplier = 1;
-    if (filter === 'undergrad') multiplier = 1.1;
-    if (filter === 'postgrad') multiplier = 0.9;
-    if (filter === 'highschool') multiplier = 0.95;
-
-    // 1. Gráfico de Linha: Desempenho vs Horas de IA
-    const ctxPerf = document.getElementById('performanceChart').getContext('2d');
-    performanceChartInstance = new Chart(ctxPerf, {
-        type: 'line',
-        data: {
-            labels: ['0-2h', '2-5h', '5-10h', '10-15h', '15-20h', '20+h'],
-            datasets: [{
-                label: 'Desempenho Acadêmico (Média Ponderada)',
-                data: [65, 78, 88, 85, 72, 58].map(v => Math.min(100, Math.round(v * multiplier))),
-                borderColor: '#4f46e5',
-                backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.35,
-                pointBackgroundColor: '#4f46e5',
-                pointRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    min: 40,
-                    max: 100
-                }
-            }
-        }
+    const base = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+    const scales = (max, sfx) => ({
+      x: { grid: { display: false } },
+      y: { min: 0, max, grid: { color: line }, ticks: { callback: x => x + sfx } }
     });
 
-    // 2. Gráfico de Rosca: Risco de Burnout
-    const ctxBurnout = document.getElementById('burnoutChart').getContext('2d');
-    burnoutChartInstance = new Chart(ctxBurnout, {
-        type: 'doughnut',
-        data: {
-            labels: ['Baixo (0-2h)', 'Moderado (2-10h)', 'Alto (10-20h)', 'Severo (20+h)'],
-            datasets: [{
-                data: [9, 22, 45, 74],
-                backgroundColor: ['#10b981', '#0ea5e9', '#f97316', '#ef4444'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { boxWidth: 12, font: { size: 11 } }
-                }
-            }
-        }
-    });
+    charts.push(new Chart("c1", {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          data: perf.map(x => x + dp),
+          borderColor: v("--kiwi"), backgroundColor: v("--kiwi"),
+          borderWidth: 4, tension: .35, pointRadius: 6, pointHoverRadius: 8
+        }]
+      },
+      options: { ...base, scales: scales(100, "") }
+    }));
 
-    // 3. Gráfico Radar: Habilidades Cognitivas
-    const ctxRadar = document.getElementById('radarChart').getContext('2d');
-    radarChartInstance = new Chart(ctxRadar, {
-        type: 'radar',
-        data: {
-            labels: ['Pensamento Crítico', 'Retenção de Memória', 'Criatividade', 'Velocidade de Entrega', 'Resolução de Problemas'],
-            datasets: [{
-                label: 'Com Uso Moderado',
-                data: [85, 80, 90, 95, 88],
-                backgroundColor: 'rgba(14, 165, 233, 0.15)',
-                borderColor: '#0ea5e9',
-                borderWidth: 2
-            }, {
-                label: 'Com Uso Excessivo (20h+)',
-                data: [50, 45, 55, 75, 48],
-                backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                borderColor: '#ef4444',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { boxWidth: 12, font: { size: 11 } }
-                }
-            },
-            scales: {
-                r: {
-                    min: 0,
-                    max: 100,
-                    ticks: { stepSize: 25 }
-                }
-            }
-        }
-    });
-}
+    charts.push(new Chart("c2", {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          data: burn.map(x => Math.max(1, Math.min(95, x + db))),
+          backgroundColor: [v("--leaf"), v("--leaf"), v("--orange"), v("--melon"), v("--berry")],
+          borderRadius: 10
+        }]
+      },
+      options: { ...base, scales: scales(100, "%") }
+    }));
 
-// Evento de Filtro Acadêmico
-document.getElementById('academicFilter').addEventListener('change', (e) => {
-    initCharts(e.target.value);
-});
+    charts.push(new Chart("c3", {
+      type: "radar",
+      data: {
+        labels: radarLabels,
+        datasets: [
+          { label: "Uso moderado", data: radarMod.map(x => x + dp), borderColor: v("--kiwi"), backgroundColor: v("--kiwi") + "33", borderWidth: 3 },
+          { label: "Uso intenso", data: radarHigh.map(x => x + dp), borderColor: v("--berry"), backgroundColor: v("--berry") + "33", borderWidth: 3 }
+        ]
+      },
+      options: {
+        ...base,
+        plugins: { legend: { display: true, position: "bottom", labels: { color: ink, usePointStyle: true } } },
+        scales: { r: { min: 0, max: 100, grid: { color: line }, angleLines: { color: line }, ticks: { display: false }, pointLabels: { color: ink, font: { size: 12 } } } }
+      }
+    }));
+  }
+  document.getElementById("lvl").addEventListener("change", drawCharts);
 
-// Inicializar na carga da página
-window.addEventListener('DOMContentLoaded', () => {
-    initCharts('all');
-});
+  // Se a fonte terminar de carregar depois dos gráficos, redesenha para usar a fonte certa
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => { if (abaAtual === "dashboard") drawCharts(); });
+  }
+
+  /* =========================================================
+     INÍCIO: tudo que roda quando a página abre
+     ========================================================= */
+  meter();
+  carregarStatusIA();
+  carregarTarefas();
+  show(location.hash.slice(1) || "inicio");
+})();
